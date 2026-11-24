@@ -56,17 +56,17 @@ body {
 .app-container {
     max-width: 1360px;
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem 1.25rem;
 }
 
 /* Header */
 .app-header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.25rem;
     border-bottom: 1px solid var(--card-border);
-    padding-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
 }
 
 .brand-row {
@@ -74,7 +74,7 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .brand-container {
@@ -92,13 +92,13 @@ body {
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
     width: fit-content;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     text-shadow: 0 0 10px var(--glow-optiscan);
 }
 
 h1 {
     font-family: var(--font-display);
-    font-size: 2.25rem;
+    font-size: 2.2rem;
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1.2;
@@ -112,24 +112,24 @@ h1 {
 
 .subtitle {
     color: var(--text-muted);
-    font-size: 0.95rem;
-    margin-top: 0.25rem;
+    font-size: 0.92rem;
+    margin-top: 0.2rem;
 }
 
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
 }
 
 .btn-action {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
+    gap: 0.45rem;
+    padding: 0.55rem 0.95rem;
     border-radius: 10px;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -167,25 +167,26 @@ h1 {
 /* Tabs */
 .comparison-tabs {
     display: flex;
-    gap: 0.6rem;
+    gap: 0.5rem;
     overflow-x: auto;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
     scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
 }
 
 .tab-btn {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid var(--card-border);
     color: var(--text-muted);
-    padding: 0.65rem 1.15rem;
+    padding: 0.6rem 1.05rem;
     border-radius: 10px;
     font-family: var(--font-sans);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     white-space: nowrap;
     transition: all 0.2s ease;
 }
@@ -227,26 +228,20 @@ h1 {
 .test-config-bar {
     display: grid;
     grid-template-columns: 1.3fr 1fr;
-    gap: 1.5rem;
+    gap: 1.25rem;
     margin-bottom: 1.25rem;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem;
     border-radius: 14px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(12px);
 }
 
-@media (max-width: 900px) {
-    .test-config-bar {
-        grid-template-columns: 1fr;
-    }
-}
-
 .config-group {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.5rem;
 }
 
 .config-label-row {
@@ -254,7 +249,7 @@ h1 {
     justify-content: space-between;
     align-items: baseline;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .config-title {
@@ -265,25 +260,24 @@ h1 {
 }
 
 .config-hint {
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     color: var(--text-muted);
 }
 
 .ground-truth-controls {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.45rem;
 }
 
 .input-wrapper {
     display: flex;
-    gap: 0.4rem;
+    gap: 0.35rem;
     background: rgba(3, 5, 10, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 10px;
     padding: 0.3rem 0.4rem;
     transition: border-color 0.2s ease;
-    flex-wrap: wrap;
 }
 
 .input-wrapper:focus-within {
@@ -293,14 +287,14 @@ h1 {
 
 #ground-truth-input {
     flex: 1;
-    min-width: 200px;
+    min-width: 140px;
     background: transparent;
     border: none;
     color: var(--text-main);
     font-family: var(--font-mono);
     font-size: 0.95rem;
     font-weight: 600;
-    padding: 0.4rem 0.6rem;
+    padding: 0.4rem 0.5rem;
     outline: none;
     letter-spacing: 0.05em;
 }
@@ -330,13 +324,14 @@ h1 {
 }
 
 .btn-save-truth {
-    background: rgba(0, 255, 136, 0.15);
-    border-color: rgba(0, 255, 136, 0.4);
+    background: rgba(0, 255, 136, 0.16);
+    border-color: rgba(0, 255, 136, 0.45);
     color: var(--color-optiscan);
+    font-weight: 700;
 }
 
 .btn-save-truth:hover {
-    background: rgba(0, 255, 136, 0.3);
+    background: rgba(0, 255, 136, 0.35);
     box-shadow: 0 0 10px var(--glow-optiscan);
 }
 
@@ -348,7 +343,7 @@ h1 {
 .truth-status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     font-size: 0.8rem;
     color: var(--text-muted);
 }
@@ -372,24 +367,26 @@ h1 {
 
 /* Seletor de Condição de Embalagem */
 .condition-selector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
 }
 
 .condition-chip {
     background: rgba(15, 23, 42, 0.7);
     border: 1px solid var(--card-border);
     color: var(--text-muted);
-    padding: 0.55rem 0.85rem;
+    padding: 0.55rem 0.75rem;
     border-radius: 9px;
     font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 0.4rem;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .condition-chip:hover {
@@ -411,10 +408,10 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    padding: 1rem 1.5rem;
-    background: linear-gradient(90deg, rgba(13, 20, 38, 0.9), rgba(10, 30, 50, 0.85));
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+    padding: 0.9rem 1.25rem;
+    background: linear-gradient(90deg, rgba(13, 20, 38, 0.95), rgba(10, 30, 50, 0.9));
     border: 1px solid rgba(0, 240, 255, 0.25);
     border-radius: 14px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
@@ -424,19 +421,19 @@ h1 {
 .trigger-mode-selector {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.65rem;
     flex-wrap: wrap;
 }
 
 .trigger-mode-label {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: var(--text-muted);
 }
 
 .mode-toggle-group {
     display: flex;
-    gap: 0.4rem;
+    gap: 0.35rem;
     background: rgba(3, 5, 10, 0.7);
     padding: 0.25rem;
     border-radius: 8px;
@@ -447,16 +444,17 @@ h1 {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    padding: 0.45rem 0.8rem;
+    padding: 0.45rem 0.75rem;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .btn-mode-toggle.active {
-    background: rgba(30, 41, 59, 0.9);
+    background: rgba(30, 41, 59, 0.95);
     color: var(--text-main);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
@@ -464,19 +462,20 @@ h1 {
 .trigger-action-wrapper {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.85rem;
 }
 
 .btn-main-trigger {
     display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: center;
+    gap: 0.65rem;
     background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 240, 255, 0.25));
     border: 1px solid var(--color-cyan);
     color: #fff;
-    padding: 0.75rem 1.5rem;
+    padding: 0.7rem 1.4rem;
     border-radius: 12px;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 800;
     font-family: var(--font-display);
     letter-spacing: 0.03em;
@@ -492,10 +491,10 @@ h1 {
 }
 
 .btn-main-trigger.armed {
-    background: linear-gradient(135deg, rgba(0, 255, 136, 0.85), rgba(0, 200, 100, 0.9));
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.9), rgba(0, 200, 100, 0.95));
     color: #03050a;
     border-color: #00ff88;
-    box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.65);
     animation: triggerPulse 1.2s infinite alternate;
 }
 
@@ -509,17 +508,18 @@ h1 {
     padding: 0.15rem 0.45rem;
     border-radius: 6px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     opacity: 0.85;
 }
 
 .trigger-status-indicator .status-pill {
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     font-weight: 800;
     padding: 0.35rem 0.75rem;
     border-radius: 9999px;
     letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
 .status-pill.status-locked {
@@ -538,14 +538,8 @@ h1 {
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-bottom: 2.5rem;
-}
-
-@media (max-width: 960px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
+    gap: 1.75rem;
+    margin-bottom: 2rem;
 }
 
 /* Card do Scanner */
@@ -562,7 +556,7 @@ h1 {
 .camera-viewport {
     position: relative;
     width: 100%;
-    height: 420px;
+    height: 400px;
     background-color: #000;
     overflow: hidden;
     display: flex;
@@ -606,14 +600,14 @@ h1 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(6, 10, 19, 0.7);
+    background: rgba(6, 10, 19, 0.72);
     backdrop-filter: blur(4px);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 15;
     text-align: center;
-    padding: 1.5rem;
+    padding: 1.25rem;
 }
 
 .viewport-lock-overlay.active {
@@ -621,38 +615,37 @@ h1 {
 }
 
 .lock-overlay-content {
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(15, 23, 42, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 14px;
-    padding: 1.5rem 2rem;
-    max-width: 380px;
+    padding: 1.25rem 1.75rem;
+    max-width: 360px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 .lock-icon {
-    font-size: 2rem;
-    margin-bottom: 0.2rem;
+    font-size: 1.8rem;
 }
 
 .lock-title {
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-main);
 }
 
 .lock-desc {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     line-height: 1.4;
 }
 
 .lock-last-read {
-    margin-top: 0.5rem;
+    margin-top: 0.4rem;
     background: rgba(0, 255, 136, 0.15);
     border: 1px solid rgba(0, 255, 136, 0.3);
     color: var(--color-optiscan);
@@ -719,7 +712,7 @@ h1 {
 
 .viewfinder-hint {
     margin-top: 1rem;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
     background: rgba(0, 0, 0, 0.6);
     padding: 0.3rem 0.8rem;
@@ -764,7 +757,7 @@ h1 {
 }
 
 .glitch-subtext {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: #fff;
     margin-top: 0.25rem;
 }
@@ -773,10 +766,10 @@ h1 {
 .scanner-controls {
     display: flex;
     justify-content: space-between;
-    padding: 1rem 1.25rem;
+    padding: 0.85rem 1rem;
     background: rgba(8, 13, 26, 0.95);
     border-top: 1px solid var(--card-border);
-    gap: 0.75rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
@@ -784,14 +777,14 @@ h1 {
     background: rgba(30, 41, 59, 0.6);
     border: 1px solid var(--card-border);
     color: var(--text-main);
-    padding: 0.55rem 0.9rem;
+    padding: 0.5rem 0.8rem;
     border-radius: 8px;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     transition: all 0.2s ease;
 }
 
@@ -822,10 +815,10 @@ h1 {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.15rem;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
@@ -833,20 +826,20 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.8rem;
     border-bottom: 1px solid var(--card-border);
-    padding-bottom: 0.9rem;
+    padding-bottom: 0.85rem;
     flex-wrap: wrap;
 }
 
 .card-title {
     font-family: var(--font-display);
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 700;
 }
 
 .card-subtitle {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     margin-top: 0.15rem;
 }
@@ -861,13 +854,13 @@ h1 {
     border: 1px solid var(--color-optiscan);
     color: var(--color-optiscan);
     font-weight: 700;
-    font-size: 0.85rem;
-    padding: 0.55rem 1rem;
+    font-size: 0.82rem;
+    padding: 0.5rem 0.9rem;
     border-radius: 10px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     transition: all 0.2s ease;
 }
 
@@ -882,9 +875,9 @@ h1 {
 .test-progress-bar-container {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.35rem;
     background: rgba(3, 5, 10, 0.5);
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.9rem;
     border-radius: 10px;
     border: 1px solid var(--card-border);
 }
@@ -892,7 +885,7 @@ h1 {
 .test-progress-header {
     display: flex;
     justify-content: space-between;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 600;
     color: var(--text-muted);
 }
@@ -904,7 +897,7 @@ h1 {
 
 .progress-track {
     width: 100%;
-    height: 8px;
+    height: 7px;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 9999px;
     overflow: hidden;
@@ -921,17 +914,17 @@ h1 {
 .metrics-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.9rem;
+    gap: 0.8rem;
 }
 
 .metric-box {
     background: rgba(10, 16, 30, 0.65);
     border: 1px solid var(--card-border);
     border-radius: 12px;
-    padding: 0.9rem 1rem;
+    padding: 0.85rem;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.3rem;
     transition: all 0.2s ease;
 }
 
@@ -946,7 +939,7 @@ h1 {
 }
 
 .metric-name {
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -954,9 +947,9 @@ h1 {
 }
 
 .metric-badge {
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     font-weight: 700;
-    padding: 0.15rem 0.45rem;
+    padding: 0.12rem 0.4rem;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-muted);
@@ -975,19 +968,19 @@ h1 {
 .metric-value-container {
     display: flex;
     align-items: baseline;
-    gap: 0.3rem;
+    gap: 0.25rem;
 }
 
 .metric-value {
     font-family: var(--font-display);
-    font-size: 1.75rem;
+    font-size: 1.65rem;
     font-weight: 800;
     color: var(--text-main);
     letter-spacing: -0.02em;
 }
 
 .metric-value .unit {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     color: var(--text-muted);
 }
@@ -1001,7 +994,7 @@ h1 {
 }
 
 .metric-footer {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--text-dark);
 }
 
@@ -1009,7 +1002,7 @@ h1 {
 .assertiveness-log-container {
     display: flex;
     flex-direction: column;
-    gap: 0.7rem;
+    gap: 0.65rem;
 }
 
 .log-header {
@@ -1021,18 +1014,18 @@ h1 {
 .log-title-row {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.5rem;
 }
 
 .log-title {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 700;
 }
 
 .log-counter {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     background: rgba(255, 255, 255, 0.08);
-    padding: 0.15rem 0.5rem;
+    padding: 0.15rem 0.45rem;
     border-radius: 9999px;
     color: var(--text-muted);
 }
@@ -1041,7 +1034,7 @@ h1 {
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: color 0.15s ease;
 }
@@ -1051,36 +1044,37 @@ h1 {
 }
 
 .log-scrollable-area {
-    height: 190px;
+    height: 180px;
     overflow-y: auto;
     border: 1px solid var(--card-border);
     border-radius: 10px;
     background: rgba(3, 5, 10, 0.5);
-    padding: 0.5rem;
+    padding: 0.45rem;
     scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
 }
 
 .log-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.35rem;
 }
 
 .log-empty-state {
-    height: 160px;
+    height: 150px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     color: var(--text-dark);
-    gap: 0.35rem;
+    gap: 0.3rem;
     text-align: center;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
 }
 
 .log-empty-state span {
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     color: var(--text-dark);
 }
 
@@ -1088,7 +1082,7 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0.75rem;
+    padding: 0.45rem 0.7rem;
     border-radius: 8px;
     background: rgba(15, 23, 42, 0.65);
     border-left: 3px solid var(--text-dark);
@@ -1113,26 +1107,26 @@ h1 {
 .log-item-left {
     display: flex;
     flex-direction: column;
-    gap: 0.12rem;
+    gap: 0.1rem;
 }
 
 .log-code {
     font-family: var(--font-mono);
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: var(--text-main);
     letter-spacing: 0.04em;
 }
 
 .log-meta {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--text-muted);
 }
 
 .log-badge {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    padding: 0.2rem 0.5rem;
+    padding: 0.18rem 0.45rem;
     border-radius: 6px;
     text-transform: uppercase;
 }
@@ -1151,18 +1145,18 @@ h1 {
  * SEÇÃO DE SÉRIES CONSOLIDADAS (MATRIZ BENCHMARK)
  * =================================================== */
 .consolidated-series-section {
-    margin-top: 2rem;
+    margin-top: 1.75rem;
 }
 
 .series-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 16px;
-    padding: 1.75rem;
+    padding: 1.5rem;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.15rem;
 }
 
 .series-card-header {
@@ -1170,13 +1164,13 @@ h1 {
     justify-content: space-between;
     align-items: flex-start;
     border-bottom: 1px solid var(--card-border);
-    padding-bottom: 1rem;
+    padding-bottom: 0.85rem;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.8rem;
 }
 
 .series-badge {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
     color: var(--color-cyan);
     letter-spacing: 0.08em;
@@ -1184,13 +1178,13 @@ h1 {
 
 .series-card-title {
     font-family: var(--font-display);
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    margin-top: 0.2rem;
+    margin-top: 0.15rem;
 }
 
 .series-card-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
 }
 
@@ -1199,8 +1193,8 @@ h1 {
     border: 1px solid rgba(0, 240, 255, 0.35);
     color: var(--color-cyan);
     font-weight: 700;
-    font-size: 0.85rem;
-    padding: 0.4rem 0.9rem;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.85rem;
     border-radius: 9999px;
 }
 
@@ -1209,12 +1203,13 @@ h1 {
     border: 1px solid var(--card-border);
     border-radius: 12px;
     background: rgba(3, 5, 10, 0.6);
+    -webkit-overflow-scrolling: touch;
 }
 
 .benchmark-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     text-align: left;
 }
 
@@ -1222,16 +1217,16 @@ h1 {
     background: rgba(15, 23, 42, 0.9);
     color: var(--text-muted);
     font-weight: 700;
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 0.9rem;
     border-bottom: 1px solid var(--card-border);
     white-space: nowrap;
     text-transform: uppercase;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     letter-spacing: 0.05em;
 }
 
 .benchmark-table td {
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 0.9rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     color: var(--text-main);
     white-space: nowrap;
@@ -1243,7 +1238,7 @@ h1 {
 
 .table-badge-acc {
     display: inline-block;
-    padding: 0.2rem 0.55rem;
+    padding: 0.18rem 0.5rem;
     border-radius: 6px;
     font-weight: 700;
 }
@@ -1317,7 +1312,7 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 1.5rem;
+    padding: 1.25rem;
     border-bottom: 1px solid var(--card-border);
 }
 
@@ -1345,9 +1340,9 @@ h1 {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 1.5rem;
+    padding: 1.25rem;
     overflow-y: auto;
-    gap: 1.5rem;
+    gap: 1.25rem;
 }
 
 .code-block-wrapper {
@@ -1361,7 +1356,7 @@ h1 {
 
 .code-block-wrapper code {
     font-family: var(--font-mono);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     color: #a5b4fc;
     line-height: 1.6;
 }
@@ -1371,10 +1366,10 @@ h1 {
     background: linear-gradient(135deg, var(--color-optiscan), var(--color-cyan));
     border: none;
     color: #03050a;
-    padding: 0.8rem;
+    padding: 0.75rem;
     border-radius: 10px;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1390,24 +1385,162 @@ h1 {
 /* Toast */
 .toast-notification {
     position: fixed;
-    bottom: 2rem;
+    bottom: 1.5rem;
     left: 50%;
     transform: translateX(-50%) translateY(100px);
     background: rgba(15, 23, 42, 0.96);
     border: 1px solid var(--color-optiscan);
     color: #fff;
-    padding: 0.75rem 1.5rem;
+    padding: 0.7rem 1.4rem;
     border-radius: 9999px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     z-index: 200;
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 600;
     pointer-events: none;
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    max-width: 90vw;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .toast-notification.show {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
+}
+
+/* ===================================================
+ * CALIBRAÇÃO RESPONSIVA ESPECÍFICA: SAMSUNG GALAXY M53 & MOBILE
+ * Viewport padrão M53: 412px × 915px (max-width: 480px)
+ * =================================================== */
+@media (max-width: 960px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .test-config-bar {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .app-container {
+        padding: 0.75rem 0.6rem;
+    }
+    h1 {
+        font-size: 1.7rem;
+    }
+    .brand-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .header-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1.4fr 1.2fr 1fr;
+        gap: 0.4rem;
+    }
+    .btn-action {
+        padding: 0.5rem 0.4rem;
+        font-size: 0.74rem;
+        justify-content: center;
+    }
+    .btn-action span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .test-config-bar {
+        padding: 0.9rem;
+        gap: 1rem;
+    }
+    .input-wrapper {
+        flex-direction: column;
+        padding: 0.4rem;
+    }
+    #ground-truth-input {
+        width: 100%;
+        font-size: 0.9rem;
+        padding: 0.4rem 0.2rem;
+    }
+    .ground-truth-buttons-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1fr;
+        gap: 0.3rem;
+        width: 100%;
+    }
+    .condition-selector {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem;
+    }
+    .condition-chip {
+        font-size: 0.76rem;
+        padding: 0.5rem 0.45rem;
+        justify-content: center;
+    }
+    .trigger-banner {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0.85rem;
+        gap: 0.75rem;
+    }
+    .trigger-mode-selector {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .mode-toggle-group {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+    }
+    .trigger-action-wrapper {
+        width: 100%;
+        flex-direction: column;
+    }
+    .btn-main-trigger {
+        width: 100%;
+        min-height: 52px;
+        font-size: 0.95rem;
+        padding: 0.75rem;
+    }
+    .trigger-status-indicator {
+        align-self: center;
+    }
+    .camera-viewport {
+        height: 320px; /* Altura ideal calibrada para a tela 20:9 do Galaxy M53 */
+    }
+    .scanner-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem;
+        padding: 0.65rem;
+    }
+    .control-btn {
+        justify-content: center;
+        font-size: 0.76rem;
+        padding: 0.5rem 0.3rem;
+    }
+    .btn-integration-code {
+        margin-left: 0;
+    }
+    .telemetry-card {
+        padding: 1rem;
+    }
+    .metrics-grid {
+        gap: 0.6rem;
+    }
+    .metric-box {
+        padding: 0.75rem;
+    }
+    .metric-value {
+        font-size: 1.45rem;
+    }
+    .series-card {
+        padding: 1rem;
+    }
+    .series-card-title {
+        font-size: 1.15rem;
+    }
 }

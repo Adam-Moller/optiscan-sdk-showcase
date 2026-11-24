@@ -93,20 +93,58 @@ Resultados consolidados em condições de estresse físico (embalagens amassadas
 
 ---
 
-## 📁 Estrutura do Repositório
+## 📁 Estrutura Modular & Arquitetura de Software
+
+O frontend do showcase foi projetado com rigor de engenharia de software (Clean Code, SOLID, Design Pattern Adapter/Strategy e ES Modules nativos), servindo como vitrine técnica para recrutadores e avaliadores de código:
 
 ```text
 optiscan-sdk-showcase/
-├── index.html               # Aplicação SPA do Showcase & Laboratório
-├── style.css                # Estilos obsidian glassmorphism e responsividade
-├── app.js                   # Orquestrador de telemetria, benchmark e Ground Truth
+├── index.html                   # Aplicação SPA do Showcase & Laboratório
+├── style.css                    # Obsidian glassmorphism e responsividade (M53 / Mobile-first)
+├── docs/
+│   └── ARCHITECTURE.md          # Especificação da arquitetura, Adapter Pattern e Test Parity
+├── js/                          # Arquitetura modular ES Modules
+│   ├── main.js                  # Entry point da aplicação
+│   ├── config/
+│   │   └── constants.js         # Configurações de motores, condições de teste e constantes
+│   ├── core/
+│   │   ├── audio.js             # Sintetizador Web Audio API para feedbacks sonoros (zero dependências)
+│   │   ├── camera.js            # Gerenciador resiliente de hardware de câmera (anti-lock Android)
+│   │   └── telemetry.js         # Monitor de telemetria (FPS e latência em tempo real)
+│   ├── engines/                 # Strategy / Adapter Pattern para paridade de testes
+│   │   ├── engine-adapter.js    # Classe base abstrata com contrato padronizado
+│   │   ├── optiscan-adapter.js  # Adaptador do OptiScan WASM SDK
+│   │   ├── google-adapter.js    # Adaptador do Google BarcodeDetector API
+│   │   ├── zxing-adapter.js     # Adaptador do Vanilla ZXing-JS
+│   │   ├── html5qr-adapter.js   # Adaptador do HTML5-QRCode
+│   │   └── quagga-adapter.js    # Adaptador do Quagga2
+│   ├── benchmark/
+│   │   ├── ground-truth.js      # Validação de código de controle e Modulo-10
+│   │   ├── series-manager.js    # Gerenciador de bateria de 10 amostras e matriz de testes
+│   │   └── exporter.js          # Exportador de payloads (CSV, Markdown e JSON)
+│   └── ui/
+│       ├── trigger-controller.js# Controle de disparo único (single-shot trigger) e atalhos
+│       └── ui-controller.js     # Manipulação de DOM, toasts e renderização de tabelas
 ├── sdk/
-│   ├── OptiScanScanner.wasm # Binário WebAssembly otimizado (-O3, sem símbolos de debug)
-│   ├── OptiScanScanner.js   # Emscripten glue loader
-│   ├── optiscan-sdk.min.js  # Wrapper JS do SDK ofuscado via Terser
-│   └── optiscan-sdk.css     # Estilos isolados do componente do scanner
-└── README.md                # Apresentação do projeto e benchmarks
+│   ├── OptiScanScanner.wasm     # Binário WebAssembly otimizado (-O3, sem símbolos de debug)
+│   ├── OptiScanScanner.js       # Emscripten glue loader
+│   ├── optiscan-sdk.min.js      # Wrapper JS do SDK com domain-lock e anti-tampering
+│   └── optiscan-sdk.css         # Estilos isolados do componente do scanner
+└── README.md                    # Apresentação do projeto e benchmarks
 ```
+
+Consulte a documentação técnica aprofundada:  
+👉 **[Documentação de Arquitetura & Paridade de Motores (docs/ARCHITECTURE.md)](docs/ARCHITECTURE.md)**
+
+---
+
+## 📱 Otimização Mobile & Calibração Samsung Galaxy M53
+
+A interface do laboratório foi desenhada com abordagem **mobile-first** e refinada para dispositivos com proporção alongada como o **Samsung Galaxy M53 (412 × 915px)**:
+* **Gatilho de Disparo Ergonômico:** Botão de ativação single-shot com altura de toque de 52px na zona natural do polegar, impedindo disparo de eventos em loop.
+* **Layout Compacto de Controle:** Botões de ação do Ground Truth (`Salvar Padrão`, `Último Lido`, `Limpar`) dispostos em grid uniforme.
+* **Viewport Adaptativo do Scanner:** Altura calibrada a 320px para manter controles e tabela de logs visíveis sem rolagem excessiva.
+* **Gerenciamento Resiliente de Câmera:** Eliminação de chamadas concorrentes a `getUserMedia()`, prevenindo o bloqueio do driver de câmera nativo do Android.
 
 ---
 
@@ -115,4 +153,3 @@ optiscan-sdk-showcase/
 Os binários compilados contidos na pasta `sdk/` são distribuídos exclusivamente para fins de demonstração, validação técnica e homologação do **OptiScan Barcode Engine**. 
 
 Para licenciamento comercial, integração em aplicativos móveis híbridos (React Native, Flutter, Capacitor/PWA) ou parcerias, entre em contato com o autor.
-
