@@ -656,7 +656,7 @@ h1 {
     font-weight: 700;
 }
 
-/* Viewfinder overlay padrão */
+/* Viewfinder overlay padrão unificado para TODOS os motores */
 .standard-viewfinder-overlay {
     position: absolute;
     top: 0;
@@ -673,25 +673,28 @@ h1 {
 
 .viewfinder-box {
     position: relative;
-    width: 70%;
-    height: 45%;
-    border: 1px dashed rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
+    width: 72%;
+    height: 48%;
+    border: 1px dashed rgba(0, 255, 136, 0.35);
+    border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.08);
+    transition: all 0.3s ease;
 }
 
 .corner {
     position: absolute;
-    width: 16px;
-    height: 16px;
-    border-color: var(--color-competitor);
+    width: 20px;
+    height: 20px;
+    border-color: var(--color-optiscan);
     border-style: solid;
+    filter: drop-shadow(0 0 4px var(--color-optiscan));
 }
 
-.corner.tl { top: -1px; left: -1px; border-width: 3px 0 0 3px; }
-.corner.tr { top: -1px; right: -1px; border-width: 3px 3px 0 0; }
-.corner.bl { bottom: -1px; left: -1px; border-width: 0 0 3px 3px; }
-.corner.br { bottom: -1px; right: -1px; border-width: 0 3px 3px 0; }
+.corner.tl { top: -1px; left: -1px; border-width: 3px 0 0 3px; border-top-left-radius: 8px; }
+.corner.tr { top: -1px; right: -1px; border-width: 3px 3px 0 0; border-top-right-radius: 8px; }
+.corner.bl { bottom: -1px; left: -1px; border-width: 0 0 3px 3px; border-bottom-left-radius: 8px; }
+.corner.br { bottom: -1px; right: -1px; border-width: 0 3px 3px 0; border-bottom-right-radius: 8px; }
 
 .scanning-laser {
     position: absolute;
@@ -699,24 +702,41 @@ h1 {
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, transparent, var(--color-error), transparent);
-    box-shadow: 0 0 8px var(--color-error);
+    background: linear-gradient(90deg, transparent 5%, var(--color-optiscan) 50%, transparent 95%);
+    box-shadow: 0 0 10px var(--color-optiscan), 0 0 20px rgba(0, 255, 136, 0.4);
     animation: laserScan 2s infinite ease-in-out;
 }
 
 @keyframes laserScan {
-    0% { top: 5%; }
-    50% { top: 95%; }
-    100% { top: 5%; }
+    0% { top: 5%; opacity: 0.6; }
+    50% { top: 92%; opacity: 1; }
+    100% { top: 5%; opacity: 0.6; }
 }
 
 .viewfinder-hint {
     margin-top: 1rem;
     font-size: 0.82rem;
     color: var(--text-muted);
-    background: rgba(0, 0, 0, 0.6);
-    padding: 0.3rem 0.8rem;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.35rem 0.9rem;
     border-radius: 9999px;
+    backdrop-filter: blur(4px);
+}
+
+/* Neutralização de overlays internos de bibliotecas (Garante ROI visual único para todos os SDKs) */
+#scanner-render-container .optiscan-overlay,
+#scanner-render-container .optiscan-viewport,
+#scanner-render-container .optiscan-status,
+#scanner-render-container .optiscan-controls,
+#scanner-render-container #qr-shaded-region {
+    display: none !important;
+}
+
+#scanner-render-container video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
 }
 
 /* Glitch Overlay */

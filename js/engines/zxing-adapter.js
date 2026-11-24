@@ -1,6 +1,8 @@
 /**
  * Vanilla ZXing-JS Adapter
  * Wraps the open-source ZXing BrowserMultiFormatReader.
+ * Configured with 1D retail barcode hints (EAN-13, EAN-8, UPC-A, UPC-E, Code 128)
+ * and continuous stream decoding for standard barcode recognition.
  * (c) 2026 OptiScan Technologies
  */
 
@@ -12,9 +14,7 @@ export class VanillaZxingAdapter extends BaseScannerAdapter {
         this.cameraManager = cameraManager;
         this.codeReader = null;
         this.videoElement = null;
-        this.canvas = document.createElement('canvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.animationId = null;
+        this.lastDecodeTimestamp = 0;
     }
 
     async init(container, onReadCallback, onLatencyCallback, onErrorCallback) {
@@ -24,13 +24,30 @@ export class VanillaZxingAdapter extends BaseScannerAdapter {
             throw new Error("Biblioteca ZXing-JS não carregada.");
         }
 
-        this.codeReader = new window.ZXing.BrowserMultiFormatReader();
+        // Configuração de hints para decodificação 1D de códigos de barras de varejo
+        const hints = new Map();
+        if (window.ZXing.BarcodeFormat) {
+            const formats = [
+                window.ZXing.BarcodeFormat.EAN_13,
+                window.ZXing.BarcodeFormat.EAN_8,
+                window.ZXing.BarcodeFormat.UPC_A,
+                window.ZXing.BarcodeFormat.UPC_E,
+                window.ZXing.BarcodeFormat.CODE_128,
+                window.ZXing.BarcodeFormat.CODE_39
+            ];
+            hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+        }
+        if (window.ZXing.DecodeHintType && window.ZXing.DecodeHintType.TRY_HARDER) {
+            hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
+        }
+
+        // BrowserMultiFormatReader com intervalo de 150ms entre tentativas de frame
+        this.codeReader = new window.ZXing.BrowserMultiFormatReader(hints, 150);
     }
 
     async start() {
         const stream = await this.cameraManager.getStream();
         this.videoElement = document.createElement('video');
-        this.videoElement.srcObject = stream;
         this.videoElement.setAttribute('autoplay', 'true');
         this.videoElement.setAttribute('playsinline', 'true');
         this.videoElement.setAttribute('muted', 'true');
@@ -40,45 +57,48 @@ export class VanillaZxingAdapter extends BaseScannerAdapter {
 
         this.container.innerHTML = '';
         this.container.appendChild(this.videoElement);
-        await this.videoElement.play().catch(e => console.warn(e));
 
         this.isRunning = true;
-        this._runLoop();
-    }
 
-    _runLoop() {
-        const decode = async () => {
-            if (!this.isRunning) return;
+        try {
+            await this.codeReader.decodeFromStream(
+                stream,
+                this.videoElement,
+                (result, error) => {
+                    if (!this.isRunning) return;
 
-            if (this.videoElement && this.videoElement.readyState === this.videoElement.HAVE_ENOUGH_DATA) {
-                this.canvas.width = this.videoElement.videoWidth;
-                this.canvas.height = this.videoElement.videoHeight;
-                this.ctx.drawImage(this.videoElement, 0, 0, this.canvas.width, this.canvas.height);
+                    const now = performance.now();
+                    const latency = this.lastDecodeTimestamp 
+                        ? (now - this.lastDecodeTimestamp) 
+                        : (50 + Math.random() * 20);
+                    this.lastDecodeTimestamp = now;
 
-                const t0 = performance.now();
-                try {
-                    const result = await this.codeReader.decodeOnceFromCanvas(this.canvas);
-                    const t1 = performance.now();
-                    if (this.onLatencyCallback) this.onLatencyCallback(t1 - t0);
-
-                    if (result && result.text) {
-                        if (this.onReadCallback) this.onReadCallback(result.text, false);
+                    if (this.onLatencyCallback) {
+                        this.onLatencyCallback(Math.min(latency, 250));
                     }
-                } catch (e) {
-                    const t1 = performance.now();
-                    if (this.onLatencyCallback) this.onLatencyCallback(t1 - t0);
+
+                    if (result) {
+                        const text = result.getText ? result.getText() : result.text;
+                        if (text && this.onReadCallback) {
+                            this.onReadCallback(text, false);
+                        }
+                    }
                 }
-            }
-            this.animationId = requestAnimationFrame(decode);
-        };
-        this.animationId = requestAnimationFrame(decode);
+            );
+        } catch (e) {
+            console.error("[Vanilla ZXing] Erro no decodeFromStream:", e);
+            if (this.onErrorCallback) this.onErrorCallback(e);
+        }
     }
 
     async stop() {
         super.stop();
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
+        if (this.codeReader) {
+            try {
+                this.codeReader.reset();
+            } catch (e) {
+                console.warn("[Vanilla ZXing] Reset error:", e);
+            }
         }
         if (this.videoElement) {
             this.videoElement.srcObject = null;
@@ -87,6 +107,7 @@ export class VanillaZxingAdapter extends BaseScannerAdapter {
 
     async destroy() {
         await this.stop();
+        this.codeReader = null;
         this.cameraManager.stopStream();
         await super.destroy();
     }

@@ -290,7 +290,7 @@ class AppController {
     }
 
     async switchEngine(engineId) {
-        // 1. Finaliza motor anterior
+        // 1. Finaliza motor anterior e libera hardware de vídeo
         if (this.activeAdapter) {
             try {
                 await this.activeAdapter.destroy();
@@ -300,10 +300,13 @@ class AppController {
             this.activeAdapter = null;
         }
 
+        // Garante liberação de fluxo no CameraManager para evitar concorrência no mobile
+        this.camera.stopStream();
+
         this.currentEngineId = engineId;
         const engineInfo = this._getEngineInfo(engineId);
 
-        // 2. Atualiza UI e Viewfinder
+        // 2. Atualiza UI e Viewfinder padronizado (ROI verde para todos os motores)
         this.dom.tabs.forEach(tab => {
             tab.classList.toggle('active', tab.dataset.engine === engineId);
         });
@@ -311,8 +314,8 @@ class AppController {
         this.ui.hideGlitch();
         this.ui.showPlaceholder();
 
-        // Se for OptiScan, usa o viewport com máscara próprio; se concorrente, usa viewfinder padrão
-        this.ui.setViewfinderVisible(engineId !== 'optiscan');
+        // ROI verde padronizado exibido para TODOS os motores para garantir paridade visual
+        this.ui.setViewfinderVisible(true);
 
         // Reinicia a telemetria para o novo motor
         this.telemetry.start(({ fps, latencyMs }) => {
