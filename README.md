@@ -115,3 +115,4 @@ optiscan-sdk-showcase/
 Os binários compilados contidos na pasta `sdk/` são distribuídos exclusivamente para fins de demonstração, validação técnica e homologação do **OptiScan Barcode Engine**. 
 
 Para licenciamento comercial, integração em aplicativos móveis híbridos (React Native, Flutter, Capacitor/PWA) ou parcerias, entre em contato com o autor.
+

@@ -365,3 +365,50 @@
         height: 44px;
     }
 }
+
+/* ===================================================
+ * BLOQUEIO DE LICENCIAMENTO DE DOMINIO (SECURITY LOCK)
+ * =================================================== */
+.optiscan-license-block {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.98), rgba(6, 10, 19, 0.99));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    z-index: 999;
+    color: #f1f5f9;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.optiscan-license-icon {
+    font-size: 2.8rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 12px rgba(255, 59, 48, 0.6));
+}
+
+.optiscan-license-block h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ff3b30;
+    margin-bottom: 0.6rem;
+    letter-spacing: -0.02em;
+}
+
+.optiscan-license-block p {
+    font-size: 0.88rem;
+    color: #94a3b8;
+    max-width: 440px;
+    line-height: 1.5;
+    margin-bottom: 0.4rem;
+}
+
+.optiscan-license-block strong {
+    color: #f1f5f9;
+}
