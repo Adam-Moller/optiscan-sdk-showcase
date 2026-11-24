@@ -24,22 +24,22 @@
         <header class="app-header">
             <div class="brand-row">
                 <div class="brand-container">
-                    <span class="brand-badge">SDK SHOWCASE • PRODUÇÃO</span>
+                    <span class="brand-badge">SDK SHOWCASE • PRODUÇÃO & BENCHMARK</span>
                     <h1 id="main-title">OptiScan <span class="accent-text">Barcode Engine</span></h1>
                     <p class="subtitle">Laboratório de Telemetria, Assertividade e Contraprova em Tempo Real</p>
                 </div>
 
                 <!-- Painel Rápido de Ações de Benchmark -->
                 <div class="header-actions">
-                    <button class="btn-action btn-export-csv" id="btn-export-csv" title="Exportar dados de teste em CSV">
+                    <button class="btn-action btn-export-csv" id="btn-export-csv" title="Exportar dados consolidados de todas as séries em CSV">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        <span>Exportar CSV</span>
+                        <span>Exportar CSV Consolidado</span>
                     </button>
-                    <button class="btn-action btn-copy-md" id="btn-copy-md" title="Copiar Tabela Formatada para o README do GitHub">
+                    <button class="btn-action btn-copy-md" id="btn-copy-md" title="Copiar Matriz de Testes em Markdown para Apresentação">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         <span>Copiar Tabela Markdown</span>
                     </button>
-                    <button class="btn-action btn-reset-bench" id="btn-reset-bench" title="Zerar Estatísticas de Teste">
+                    <button class="btn-action btn-reset-bench" id="btn-reset-bench" title="Zerar Estatísticas e Séries de Teste">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
                         <span>Zerar Testes</span>
                     </button>
@@ -76,9 +76,12 @@
                 </div>
                 <div class="ground-truth-controls">
                     <div class="input-wrapper">
-                        <input type="text" id="ground-truth-input" placeholder="Ex: 7891000100103 (digite ou clique ao lado)" maxlength="18" autocomplete="off" spellcheck="false">
+                        <input type="text" id="ground-truth-input" placeholder="Digite o código (ex: 7891000100103) e aperte Salvar" maxlength="18" autocomplete="off" spellcheck="false">
+                        <button class="btn-input-action btn-save-truth" id="btn-save-truth" title="Definir o código digitado como o padrão de controle">
+                            <span>Salvar como Padrão</span>
+                        </button>
                         <button class="btn-input-action" id="btn-set-last-as-truth" title="Definir o último código lido como o código de controle">
-                            <span>Definir Último Lido</span>
+                            <span>Último Lido</span>
                         </button>
                         <button class="btn-input-action btn-clear-truth" id="btn-clear-truth" title="Limpar código de controle">
                             <span>Limpar</span>
@@ -98,18 +101,45 @@
                     <span class="config-hint">Categoriza a sessão no relatório de benchmark</span>
                 </div>
                 <div class="condition-selector" id="condition-selector">
-                    <button class="condition-chip active" data-condition="CURVED">
-                        <span class="chip-icon">🥫</span> Curva / Cilíndrica
-                    </button>
-                    <button class="condition-chip" data-condition="CRUSHED">
+                    <button class="condition-chip active" data-condition="CRUSHED">
                         <span class="chip-icon">⚡</span> Amassada / Dobrada
+                    </button>
+                    <button class="condition-chip" data-condition="CURVED">
+                        <span class="chip-icon">🥫</span> Curva / Cilíndrica
                     </button>
                     <button class="condition-chip" data-condition="REFLECTIVE">
                         <span class="chip-icon">💡</span> Reflexo / Plástico
                     </button>
                     <button class="condition-chip" data-condition="FLAT">
-                        <span class="chip-icon">📄</span> Plana / Padrão
+                        <span class="chip-icon">📄</span> Plana / Lisa (Padrão)
                     </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Barra do Gatilho / Modo de Disparo (Trigger Bar) -->
+        <section class="trigger-banner">
+            <div class="trigger-mode-selector">
+                <span class="trigger-mode-label">Modo de Leitura:</span>
+                <div class="mode-toggle-group">
+                    <button class="btn-mode-toggle active" id="btn-mode-single" title="Lê exatamente 1 código por clique e trava imediatamente">
+                        <span>🎯 Disparo Único (Trava Automática)</span>
+                    </button>
+                    <button class="btn-mode-toggle" id="btn-mode-continuous" title="Leitura contínua livre">
+                        <span>⚡ Modo Contínuo</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- O Botão Gatilho Principal -->
+            <div class="trigger-action-wrapper">
+                <button class="btn-main-trigger" id="btn-main-trigger">
+                    <span class="trigger-icon" id="trigger-icon">🎯</span>
+                    <span class="trigger-btn-text" id="trigger-btn-text">DESTRAVAR LEITOR (1 DISPARO)</span>
+                    <span class="trigger-kbd">[Espaço]</span>
+                </button>
+                <div class="trigger-status-indicator" id="trigger-status-indicator">
+                    <span class="status-pill status-locked" id="status-pill">TRAVADO</span>
                 </div>
             </div>
         </section>
@@ -145,6 +175,16 @@
                                 </div>
                                 <div class="viewfinder-hint">Posicione o código de barras no centro</div>
                             </div>
+
+                            <!-- Overlay de Leitor Travado (Modo Single-Shot) -->
+                            <div class="viewport-lock-overlay" id="viewport-lock-overlay">
+                                <div class="lock-overlay-content">
+                                    <div class="lock-icon">⏸️</div>
+                                    <div class="lock-title">Leitor Travado</div>
+                                    <div class="lock-desc">Clique no botão abaixo ou aperte <strong>[Espaço]</strong> para liberar 1 leitura</div>
+                                    <div class="lock-last-read" id="lock-last-read" style="display:none;"></div>
+                                </div>
+                            </div>
                             
                             <!-- Efeito Glitch de Alucinação / Leitura Falsa -->
                             <div class="glitch-overlay" id="glitch-overlay">
@@ -153,7 +193,7 @@
                             </div>
                         </div>
 
-                        <!-- Painel Inferior do Scanner (Controle de Câmera) -->
+                        <!-- Painel Inferior do Scanner (Controles de Hardware) -->
                         <div class="scanner-controls">
                             <button class="control-btn" id="btn-switch-camera" title="Trocar Câmera">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -165,9 +205,14 @@
                                 <span>Lanterna</span>
                             </button>
 
+                            <button class="control-btn" id="btn-toggle-sound" title="Ativar/Desativar Som">
+                                <span id="sound-icon">🔊</span>
+                                <span id="sound-text">Bip Sonoro: Ligado</span>
+                            </button>
+
                             <button class="control-btn btn-integration-code" id="btn-view-code" title="Ver Código de Integração">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                                <span>Snippet de Código</span>
+                                <span>Snippet</span>
                             </button>
                         </div>
 
@@ -178,15 +223,28 @@
                 <section class="telemetry-section" aria-labelledby="telemetry-title">
                     <div class="telemetry-card">
                         
-                        <!-- Cabeçalho do Painel -->
+                        <!-- Cabeçalho do Painel com Botão "Salvar na Série" -->
                         <div class="card-header">
                             <div>
-                                <h2 id="telemetry-title" class="card-title">Métricas de Telemetria & Assertividade</h2>
+                                <h2 id="telemetry-title" class="card-title">Métricas da Bateria de Teste</h2>
                                 <p class="card-subtitle" id="active-engine-desc">OptiScan Core Engine • Compilado em WebAssembly</p>
                             </div>
-                            <div class="status-indicator">
-                                <span class="pulse-indicator active optiscan" id="telemetry-pulse"></span>
-                                <span class="indicator-text" id="engine-live-status">Ativo (60 FPS)</span>
+                            <div class="series-action-box">
+                                <button class="btn-save-series" id="btn-save-series" title="Salvar este lote de leituras na série oficial do benchmark">
+                                    <span class="save-icon">💾</span>
+                                    <span>Salvar na Série</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Progresso da Série Atual (Até 10 eventos) -->
+                        <div class="test-progress-bar-container">
+                            <div class="test-progress-header">
+                                <span class="test-progress-title">Progresso da Bateria Atual:</span>
+                                <span class="test-progress-counter" id="test-progress-counter">0 / 10 leituras</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
                             </div>
                         </div>
 
@@ -241,15 +299,15 @@
                             </div>
                         </div>
 
-                        <!-- Seção de Log de Assertividade em Tempo Real -->
+                        <!-- Seção de Log de Assertividade em Tempo Real (Até 10 eventos recentes) -->
                         <div class="assertiveness-log-container">
                             <div class="log-header">
                                 <div class="log-title-row">
-                                    <h3 class="log-title">Auditoria de Leituras & Contraprova</h3>
-                                    <span class="log-counter" id="log-counter">0 eventos</span>
+                                    <h3 class="log-title">Auditoria do Teste Atual (Últimos Eventos)</h3>
+                                    <span class="log-counter" id="log-counter">0 / 10 eventos</span>
                                 </div>
                                 <div class="log-actions">
-                                    <button class="btn-text-action" id="btn-clear-logs">Limpar Lista</button>
+                                    <button class="btn-text-action" id="btn-clear-logs">Limpar Bateria</button>
                                 </div>
                             </div>
 
@@ -258,8 +316,8 @@
                                 <ul class="log-list" id="assertiveness-log-list">
                                     <li class="log-empty-state" id="log-empty-msg">
                                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16m-7 6h7"/></svg>
-                                        <p>Nenhuma leitura registrada ainda.</p>
-                                        <span>Aponte a câmera para uma embalagem física para registrar.</span>
+                                        <p>Nenhuma leitura registrada no teste atual.</p>
+                                        <span>Destrave o leitor e aproxime a embalagem física para registrar.</span>
                                     </li>
                                 </ul>
                             </div>
@@ -270,6 +328,48 @@
 
             </div>
         </main>
+
+        <!-- Seção Inferior: Matriz de Séries Consolidadas do Benchmark -->
+        <section class="consolidated-series-section">
+            <div class="series-card">
+                <div class="series-card-header">
+                    <div class="series-title-group">
+                        <span class="series-badge">MATRIZ CONSOLIDADA DE BENCHMARK</span>
+                        <h2 class="series-card-title">Séries de Teste Coletadas para Apresentação</h2>
+                        <p class="series-card-subtitle">Agrupamento dos testes executados por motor e condição de embalagem</p>
+                    </div>
+                    <div class="series-counter-badge">
+                        <span id="saved-series-count">0 séries salvas</span>
+                    </div>
+                </div>
+
+                <div class="series-table-wrapper" id="series-table-wrapper">
+                    <table class="benchmark-table" id="benchmark-table">
+                        <thead>
+                            <tr>
+                                <th># Série</th>
+                                <th>Motor de Leitura</th>
+                                <th>Condição da Embalagem</th>
+                                <th>Código Esperado</th>
+                                <th>Amostras</th>
+                                <th>Corretas</th>
+                                <th>Alucinações</th>
+                                <th>Assertividade</th>
+                                <th>Latência Média</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="benchmark-table-body">
+                            <tr class="table-empty-row" id="table-empty-row">
+                                <td colspan="10" style="text-align: center; padding: 2rem; color: var(--text-dark);">
+                                    Nenhuma série consolidada ainda. Execute os 10 disparos e clique em <strong>"Salvar na Série"</strong> acima para montar seu relatório oficial.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
         <!-- Drawer Lateral: Snippet de Código de Integração -->
         <div class="code-drawer-overlay" id="drawer-overlay"></div>
@@ -304,20 +404,15 @@
     </div>
 
     <!-- Scripts dos Motores Concorrentes para Comparação Direta -->
-    <!-- 1. HTML5-QRCode -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    
-    <!-- 2. Quagga2 -->
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
-    
-    <!-- 3. Vanilla ZXing-JS -->
     <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
 
-    <!-- 4. Nosso Motor OptiScan SDK (Glue WASM + SDK Wrapper Ofuscado) -->
+    <!-- Nosso Motor OptiScan SDK (Glue WASM + SDK Wrapper Ofuscado com Domain Lock) -->
     <script src="sdk/OptiScanScanner.js"></script>
     <script src="sdk/optiscan-sdk.min.js"></script>
 
-    <!-- Orquestrador Principal do Showcase e Benchmark -->
+    <!-- Orquestrador Principal do Showcase, Benchmark e Áudio -->
     <script src="app.js"></script>
 
 </body>

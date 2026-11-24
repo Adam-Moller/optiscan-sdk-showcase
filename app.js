@@ -1,18 +1,26 @@
 /**
  * OptiScan Barcode Engine - Showcase & Benchmark Controller
- * Handles multi-engine benchmarking, Ground Truth validation (accuracy vs false positives),
- * real-time telemetry, glitch visualization, and data export (CSV/Markdown).
+ * Handles multi-engine benchmarking, Ground Truth validation, single-shot trigger lock,
+ * Web Audio scanner beeps, test series aggregation (up to 10 events), and comprehensive data export.
  * (c) 2026 OptiScan Technologies.
  */
 
 // Global State
 const STATE = {
     activeEngine: 'optiscan',
-    activeCondition: 'CURVED',
+    activeCondition: 'CRUSHED',
     groundTruthCode: '',
     cameraStream: null,
     activeScannerInstance: null,
     isTorchOn: false,
+    soundEnabled: true,
+    audioCtx: null,
+
+    // Single-Shot Trigger Mode
+    triggerMode: 'SINGLE', // 'SINGLE' or 'CONTINUOUS'
+    isArmed: false,        // In Single mode: waits for user trigger
+
+    // Telemetry & FPS
     lastLatencySamples: [],
     fpsIntervalId: null,
     frameCounter: 0,
@@ -22,9 +30,15 @@ const STATE = {
     activeDeviceId: null,
     devices: [],
     lastReadCode: '',
-    
-    // Benchmark Logs and Statistics
-    benchmarkRecords: [],
+
+    // Active Test Battery (Up to 10 events)
+    currentSeriesEvents: [],
+
+    // Consolidated Series Matrix for Presentation
+    savedSeries: [],
+    seriesCounter: 0,
+
+    // Engine Stats for Live Display
     stats: {
         'optiscan': { correct: 0, falsePositives: 0, total: 0, latencies: [] },
         'google-detector': { correct: 0, falsePositives: 0, total: 0, latencies: [] },
@@ -40,22 +54,40 @@ const EL = {
     viewportContainer: document.getElementById('shared-scanner-container'),
     renderContainer: document.getElementById('scanner-render-container'),
     standardViewfinder: document.getElementById('standard-viewfinder'),
+    lockOverlay: document.getElementById('viewport-lock-overlay'),
+    lockLastRead: document.getElementById('lock-last-read'),
     glitchOverlay: document.getElementById('glitch-overlay'),
     glitchSubtext: document.getElementById('glitch-subtext'),
     placeholder: document.getElementById('camera-loading-placeholder'),
     btnSwitchCamera: document.getElementById('btn-switch-camera'),
     btnToggleTorch: document.getElementById('btn-toggle-torch'),
+    btnToggleSound: document.getElementById('btn-toggle-sound'),
+    soundIcon: document.getElementById('sound-icon'),
+    soundText: document.getElementById('sound-text'),
     btnViewCode: document.getElementById('btn-view-code'),
     btnExportCsv: document.getElementById('btn-export-csv'),
     btnCopyMd: document.getElementById('btn-copy-md'),
     btnResetBench: document.getElementById('btn-reset-bench'),
+    btnSaveSeries: document.getElementById('btn-save-series'),
     btnClearLogs: document.getElementById('btn-clear-logs'),
     groundTruthInput: document.getElementById('ground-truth-input'),
+    btnSaveTruth: document.getElementById('btn-save-truth'),
     btnSetLastAsTruth: document.getElementById('btn-set-last-as-truth'),
     btnClearTruth: document.getElementById('btn-clear-truth'),
     truthStatusBadge: document.getElementById('truth-status-badge'),
     truthStatusText: document.getElementById('truth-status-text'),
     conditionChips: document.querySelectorAll('.condition-chip'),
+    btnModeSingle: document.getElementById('btn-mode-single'),
+    btnModeContinuous: document.getElementById('btn-mode-continuous'),
+    btnMainTrigger: document.getElementById('btn-main-trigger'),
+    triggerBtnText: document.getElementById('trigger-btn-text'),
+    triggerIcon: document.getElementById('trigger-icon'),
+    statusPill: document.getElementById('status-pill'),
+    testProgressCounter: document.getElementById('test-progress-counter'),
+    progressFill: document.getElementById('progress-fill'),
+    savedSeriesCount: document.getElementById('saved-series-count'),
+    benchmarkTableBody: document.getElementById('benchmark-table-body'),
+    tableEmptyRow: document.getElementById('table-empty-row'),
     logList: document.getElementById('assertiveness-log-list'),
     logEmptyMsg: document.getElementById('log-empty-msg'),
     logCounter: document.getElementById('log-counter'),
@@ -78,88 +110,125 @@ const EL = {
     toastMessage: document.getElementById('toast-message')
 };
 
-// Snippets de Integração
-const CODE_SNIPPETS = {
-    'optiscan': `<!-- 1. Estilos no <head> -->
-<link rel="stylesheet" href="sdk/optiscan-sdk.css">
-
-<!-- 2. Container no HTML -->
-<div id="scanner-container" style="width: 100%; max-width: 600px; height: 400px;"></div>
-
-<!-- 3. Inicialização do SDK -->
-<script src="sdk/OptiScanScanner.js"></script>
-<script src="sdk/optiscan-sdk.min.js"></script>
-<script>
-    const leitor = new OptiScanSDK({
-        containerId: 'scanner-container',
-        wasmPath: 'sdk/OptiScanScanner.js',
-        scanInterval: 250, // Fallback secundário throttled
-        cooldown: 2000,    // Previne leituras duplicadas
-        vibrate: true,
-        onSuccess: (code) => {
-            console.log("Código validado por consenso:", code);
-        },
-        onStateChange: (state) => {
-            console.log("Status do motor:", state);
+// ----------------------------------------------------
+// 1. ÁUDIO DO SCANNER (WEB AUDIO API)
+// ----------------------------------------------------
+function initAudio() {
+    if (!STATE.audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            STATE.audioCtx = new AudioCtx();
         }
-    });
-</script>`,
+    }
+    if (STATE.audioCtx && STATE.audioCtx.state === 'suspended') {
+        STATE.audioCtx.resume();
+    }
+}
 
-    'google-detector': `// Google Barcode Detection API (Nativo Chromium)
-if ('BarcodeDetector' in window) {
-    const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a'] });
-    const video = document.querySelector('video');
-    
-    const scanLoop = async () => {
-        try {
-            const detections = await detector.detect(video);
-            if (detections.length > 0) {
-                // A API nativa do Google lê o primeiro frame sem consenso temporal
-                console.log("Lido pelo Google:", detections[0].rawValue);
-            }
-        } catch (e) {
-            console.error(e);
+function playScanBeep(isSuccess) {
+    if (!STATE.soundEnabled) return;
+    try {
+        initAudio();
+        if (!STATE.audioCtx) return;
+
+        const ctx = STATE.audioCtx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (isSuccess) {
+            // Beep clássico de scanner de supermercado (agudo e limpo)
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1100, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1350, ctx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.22, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.09);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.09);
+        } else {
+            // Beep de alucinação / erro (grave e descendente)
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(320, ctx.currentTime);
+            osc.frequency.linearRampToValueAtTime(180, ctx.currentTime + 0.18);
+            gain.gain.setValueAtTime(0.28, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.2);
         }
-        requestAnimationFrame(scanLoop);
-    };
-    scanLoop();
-}`,
-
-    'vanilla-zxing': `// Vanilla ZXing-JS (Sem consenso espacial/temporal)
-const codeReader = new ZXing.BrowserMultiFormatReader();
-const video = document.querySelector('video');
-
-codeReader.decodeFromVideoDevice(null, video, (result, err) => {
-    if (result) {
-        // Captura direta vulnerável a dobras e reflexos
-        console.log("Lido pelo ZXing Puro:", result.text);
+    } catch (e) {
+        console.warn("[OptiScan] Audio exception:", e);
     }
-});`,
-
-    'html5-qrcode': `// HTML5-QRCode
-const html5Qrcode = new Html5Qrcode("scanner-container");
-html5Qrcode.start(
-    { facingMode: "environment" },
-    { fps: 15, qrbox: { width: 300, height: 160 } },
-    (decodedText) => {
-        console.log("Lido pelo HTML5-QRCode:", decodedText);
-    }
-);`,
-
-    'quagga': `// Quagga2
-Quagga.init({
-    inputStream: { type: "LiveStream", target: document.querySelector("#scanner-container") },
-    decoder: { readers: ["ean_reader", "upc_reader"] }
-}, (err) => {
-    if (!err) Quagga.start();
-});
-Quagga.onDetected((result) => {
-    console.log("Lido pelo Quagga2:", result.codeResult.code);
-});`
-};
+}
 
 // ----------------------------------------------------
-// 1. GESTÃO DE DISPOSITIVOS E CÂMERA
+// 2. DISPARO ÚNICO / MODO GATILHO (TRIGGER LOCK)
+// ----------------------------------------------------
+function setTriggerMode(mode) {
+    STATE.triggerMode = mode;
+    if (mode === 'SINGLE') {
+        EL.btnModeSingle.classList.add('active');
+        EL.btnModeContinuous.classList.remove('active');
+        disarmTrigger(); // Inicia travado
+        showToast("Modo Disparo Único ativo: O leitor trava após cada leitura.");
+    } else {
+        EL.btnModeSingle.classList.remove('active');
+        EL.btnModeContinuous.classList.add('active');
+        armContinuousMode();
+        showToast("Modo Contínuo ativo: Leituras livres em tempo real.");
+    }
+}
+
+function armTrigger() {
+    initAudio();
+    STATE.isArmed = true;
+    EL.btnMainTrigger.classList.add('armed');
+    EL.triggerIcon.innerText = '🟢';
+    EL.triggerBtnText.innerText = 'AGUARDANDO LEITURA...';
+    EL.statusPill.className = 'status-pill status-armed';
+    EL.statusPill.innerText = 'ARMADO (1 LEITURA)';
+    EL.lockOverlay.classList.remove('active');
+    triggerHaptic([40]);
+}
+
+function disarmTrigger() {
+    STATE.isArmed = false;
+    EL.btnMainTrigger.classList.remove('armed');
+    EL.triggerIcon.innerText = '🎯';
+    EL.triggerBtnText.innerText = 'DESTRAVAR LEITOR (1 DISPARO)';
+    EL.statusPill.className = 'status-pill status-locked';
+    EL.statusPill.innerText = 'TRAVADO';
+
+    if (STATE.triggerMode === 'SINGLE') {
+        EL.lockOverlay.classList.add('active');
+        if (STATE.lastReadCode) {
+            EL.lockLastRead.style.display = 'block';
+            EL.lockLastRead.innerText = `Último Lido: ${STATE.lastReadCode}`;
+        }
+    }
+}
+
+function armContinuousMode() {
+    STATE.isArmed = true;
+    EL.btnMainTrigger.classList.remove('armed');
+    EL.triggerIcon.innerText = '⚡';
+    EL.triggerBtnText.innerText = 'MODO CONTÍNUO ATIVO';
+    EL.statusPill.className = 'status-pill status-armed';
+    EL.statusPill.innerText = 'CONTÍNUO';
+    EL.lockOverlay.classList.remove('active');
+}
+
+function toggleTrigger() {
+    if (STATE.triggerMode === 'CONTINUOUS') return;
+    if (STATE.isArmed) {
+        disarmTrigger();
+    } else {
+        armTrigger();
+    }
+}
+
+// ----------------------------------------------------
+// 3. GESTÃO DE CÂMERA E DISPOSITIVOS
 // ----------------------------------------------------
 async function enumerateAllDevices() {
     try {
@@ -212,7 +281,7 @@ function stopCameraStream() {
 }
 
 // ----------------------------------------------------
-// 2. ORQUESTRAÇÃO DE MOTORES
+// 4. ORQUESTRAÇÃO DOS 5 MOTORES
 // ----------------------------------------------------
 async function switchEngine(engineName) {
     const prevEngine = STATE.activeEngine;
@@ -228,15 +297,16 @@ async function switchEngine(engineName) {
     }
 
     EL.tabs.forEach(tab => {
-        if (tab.dataset.engine === engineName) {
-            tab.classList.add('active');
-        } else {
-            tab.classList.remove('active');
-        }
+        tab.classList.toggle('active', tab.dataset.engine === engineName);
     });
 
     updateTelemetryPulse();
     updateUIHeaderForEngine(engineName);
+
+    // No modo Single-Shot, re-trava para o novo motor
+    if (STATE.triggerMode === 'SINGLE') {
+        disarmTrigger();
+    }
 
     try {
         switch (engineName) {
@@ -294,7 +364,7 @@ async function destroyActiveScanner(engine) {
 function updateUIHeaderForEngine(engine) {
     const descs = {
         'optiscan': 'OptiScan Core • Fatiamento Espacial + Consenso Temporal em WASM',
-        'google-detector': 'Google Barcode Detection API • Decodificador Nativo do Chromium',
+        'google-detector': 'Google Barcode Detection API • Decodificador Nativo Chromium',
         'vanilla-zxing': 'Vanilla ZXing-JS • Motor Clássico Open-Source em JS',
         'html5-qrcode': 'HTML5-QRCode • Wrapper padrão do ZXing em Canvas',
         'quagga': 'Quagga2 • Processamento de Imagem 1D puro em JavaScript'
@@ -324,7 +394,7 @@ async function initOptiScanEngine() {
         vibrate: true,
         onSuccess: (code) => {
             recordLatencySample(9 + Math.random() * 5); // 9-14ms
-            registrarLeitura('OptiScan SDK', code, true);
+            handleDetectedCode('OptiScan SDK', code, true);
         },
         onStateChange: (state) => {
             EL.engineLiveStatus.innerText = state === 'SCANNING' ? 'Ativo (60 FPS)' : state;
@@ -337,7 +407,7 @@ async function initOptiScanEngine() {
 // --- MOTOR 2: GOOGLE BARCODE DETECTION API ---
 async function initGoogleDetectorEngine() {
     if (!('BarcodeDetector' in window)) {
-        EL.placeholder.innerHTML = `<p style="color:var(--color-error); padding: 1rem; text-align: center;">BarcodeDetector API não suportada neste navegador.<br>Disponível nativamente no Google Chrome / Chromium no Android/Desktop.</p>`;
+        EL.placeholder.innerHTML = `<p style="color:var(--color-error); padding: 1.5rem; text-align: center;">BarcodeDetector API não suportada neste navegador.<br>Disponível nativamente no Google Chrome / Chromium no Android e Desktop.</p>`;
         return;
     }
 
@@ -372,7 +442,7 @@ async function initGoogleDetectorEngine() {
                 const t1 = performance.now();
                 recordLatencySample(t1 - t0);
                 if (detections.length > 0) {
-                    registrarLeitura('Google API', detections[0].rawValue, false);
+                    handleDetectedCode('Google API', detections[0].rawValue, false);
                 }
             } catch (e) {
                 const t1 = performance.now();
@@ -422,7 +492,7 @@ async function initVanillaZxingEngine() {
                 const t1 = performance.now();
                 recordLatencySample(t1 - t0);
                 if (result) {
-                    registrarLeitura('Vanilla ZXing', result.text, false);
+                    handleDetectedCode('Vanilla ZXing', result.text, false);
                 }
             } catch (err) {
                 const t1 = performance.now();
@@ -456,7 +526,7 @@ async function initHtml5QrcodeEngine() {
             cameraParam,
             config,
             (decodedText) => {
-                registrarLeitura('HTML5-QRCode', decodedText, false);
+                handleDetectedCode('HTML5-QRCode', decodedText, false);
             },
             () => {
                 recordLatencySample(40 + Math.random() * 20);
@@ -511,47 +581,13 @@ async function initQuaggaEngine() {
 
     Quagga.onDetected((res) => {
         if (res && res.codeResult) {
-            registrarLeitura('Quagga2', res.codeResult.code, false);
+            handleDetectedCode('Quagga2', res.codeResult.code, false);
         }
     });
 }
 
 // ----------------------------------------------------
-// 3. TELEMETRIA E CÁLCULO DE ASSERTIVIDADE
-// ----------------------------------------------------
-function recordLatencySample(ms) {
-    STATE.lastLatencySamples.push(ms);
-    if (STATE.lastLatencySamples.length > 20) {
-        STATE.lastLatencySamples.shift();
-    }
-}
-
-function startTelemetryMonitor() {
-    STATE.frameCounter = 0;
-    STATE.lastFrameTime = Date.now();
-    STATE.lastLatencySamples = [];
-
-    STATE.telemetryUpdateInterval = setInterval(() => {
-        const now = Date.now();
-        const delta = (now - STATE.lastFrameTime) / 1000;
-        const fps = Math.round(STATE.frameCounter / Math.max(delta, 0.001));
-        EL.metricFps.innerHTML = `${fps} <span class="unit">FPS</span>`;
-        STATE.frameCounter = 0;
-        STATE.lastFrameTime = now;
-
-        if (STATE.lastLatencySamples.length > 0) {
-            const avg = STATE.lastLatencySamples.reduce((a, b) => a + b, 0) / STATE.lastLatencySamples.length;
-            EL.metricLatency.innerHTML = `${avg.toFixed(1)} <span class="unit">ms</span>`;
-        } else {
-            EL.metricLatency.innerHTML = `-- <span class="unit">ms</span>`;
-        }
-
-        updateAccuracyUI();
-    }, 1000);
-}
-
-// ----------------------------------------------------
-// 4. VALIDAÇÃO DE GROUND TRUTH E REGISTRO DE LEITURA
+// 5. PROCESSAMENTO DE LEITURA & CONTROLE DE GATILHO
 // ----------------------------------------------------
 const READ_COOLDOWNS = {};
 
@@ -569,77 +605,91 @@ function isValidBarcodeChecksum(code) {
     return calc === checkDigit;
 }
 
-function registrarLeitura(engineName, codeText, isOptiscanConsensus) {
+function handleDetectedCode(engineName, codeText, isOptiscanConsensus) {
+    // 1. Em modo Single-Shot: se não estiver armado, ignora completamente
+    if (STATE.triggerMode === 'SINGLE' && !STATE.isArmed) {
+        return;
+    }
+
     const cleanCode = String(codeText).trim();
     if (!cleanCode || cleanCode.length < 5) return;
 
     const now = Date.now();
     const cooldownKey = `${engineName}-${cleanCode}`;
-    if (READ_COOLDOWNS[cooldownKey] && now - READ_COOLDOWNS[cooldownKey] < 2000) {
-        return;
+    if (STATE.triggerMode === 'CONTINUOUS') {
+        if (READ_COOLDOWNS[cooldownKey] && now - READ_COOLDOWNS[cooldownKey] < 2000) {
+            return;
+        }
     }
     READ_COOLDOWNS[cooldownKey] = now;
     STATE.lastReadCode = cleanCode;
 
-    // Avaliação de Ground Truth (Contraprova)
-    let status = 'UNVERIFIED'; // 'MATCH', 'FALSE_POSITIVE', 'CORRUPT'
+    // 2. Avaliação de Ground Truth (Contraprova)
+    let status = 'MATCH'; // 'MATCH', 'FALSE_POSITIVE'
     const groundTruth = STATE.groundTruthCode.trim();
 
     if (groundTruth) {
-        if (cleanCode === groundTruth) {
-            status = 'MATCH';
-        } else {
-            status = 'FALSE_POSITIVE';
-        }
+        status = (cleanCode === groundTruth) ? 'MATCH' : 'FALSE_POSITIVE';
     } else {
         // Sem controle definido: baseia-se em Checksum e Consenso
-        if (isOptiscanConsensus || isValidBarcodeChecksum(cleanCode)) {
-            status = 'MATCH';
-        } else {
-            status = 'CORRUPT';
-        }
+        status = (isOptiscanConsensus || isValidBarcodeChecksum(cleanCode)) ? 'MATCH' : 'FALSE_POSITIVE';
     }
 
-    // Atualiza Estatísticas do Motor
-    const engineKey = STATE.activeEngine;
-    if (STATE.stats[engineKey]) {
-        STATE.stats[engineKey].total++;
-        if (status === 'MATCH') {
-            STATE.stats[engineKey].correct++;
-        } else {
-            STATE.stats[engineKey].falsePositives++;
-        }
-        const currentLatency = STATE.lastLatencySamples.length > 0 ? 
-            STATE.lastLatencySamples[STATE.lastLatencySamples.length - 1] : 15;
-        STATE.stats[engineKey].latencies.push(currentLatency);
+    const isMatch = (status === 'MATCH');
+
+    // 3. Toca o bip sonoro imediatamente
+    playScanBeep(isMatch);
+
+    // 4. Se estiver no modo Single-Shot: trava o scanner imediatamente!
+    if (STATE.triggerMode === 'SINGLE') {
+        disarmTrigger();
     }
 
-    // Registra Sessão de Benchmark para Exportação
-    STATE.benchmarkRecords.push({
+    // 5. Registra o evento na bateria corrente (máx 10)
+    const latencyVal = (STATE.lastLatencySamples[STATE.lastLatencySamples.length - 1] || 14).toFixed(1);
+    const eventObj = {
         timestamp: new Date().toISOString(),
+        timeStr: new Date().toLocaleTimeString('pt-BR'),
         engine: engineName,
         condition: STATE.activeCondition,
         groundTruth: groundTruth || 'N/A',
         detectedCode: cleanCode,
         status: status,
-        latencyMs: (STATE.lastLatencySamples[STATE.lastLatencySamples.length - 1] || 15).toFixed(1)
-    });
+        isMatch: isMatch,
+        latencyMs: latencyVal
+    };
+
+    STATE.currentSeriesEvents.push(eventObj);
+
+    // Atualiza Estatísticas do Motor
+    const engineKey = STATE.activeEngine;
+    if (STATE.stats[engineKey]) {
+        STATE.stats[engineKey].total++;
+        if (isMatch) {
+            STATE.stats[engineKey].correct++;
+        } else {
+            STATE.stats[engineKey].falsePositives++;
+        }
+        STATE.stats[engineKey].latencies.push(parseFloat(latencyVal));
+    }
 
     // Feedback Visual e Glitch
-    if (status === 'MATCH') {
+    if (isMatch) {
         adicionarItemLog(cleanCode, engineName, 'Correto (Match)', 'badge-match', 'match');
         triggerHaptic([60]);
-    } else if (status === 'FALSE_POSITIVE') {
+    } else {
         triggerGlitchEffect(`Lido: ${cleanCode} (Esperado: ${groundTruth})`);
         adicionarItemLog(cleanCode, engineName, `Alucinação / Divergente`, 'badge-false', 'false-positive');
         triggerHaptic([40, 50, 40]);
-    } else {
-        triggerGlitchEffect(`Sinal Corrompido: ${cleanCode}`);
-        adicionarItemLog(cleanCode, engineName, 'Ruído / Checksum Falhou', 'badge-false', 'false-positive');
-        triggerHaptic([40, 50, 40]);
     }
 
+    updateBatteryProgressUI();
     updateAccuracyUI();
+
+    // Notificação ao atingir 10 leituras
+    if (STATE.currentSeriesEvents.length === 10) {
+        showToast("🎉 10 leituras concluídas nesta bateria! Clique em 'Salvar na Série' para consolidar.");
+    }
 }
 
 function adicionarItemLog(codeText, engineName, statusText, badgeClass, itemClass) {
@@ -657,7 +707,20 @@ function adicionarItemLog(codeText, engineName, statusText, badgeClass, itemClas
     `;
 
     EL.logList.insertBefore(li, EL.logList.firstChild);
-    EL.logCounter.innerText = `${STATE.benchmarkRecords.length} eventos`;
+
+    // Mantém no máximo 10 itens no visual do log
+    while (EL.logList.children.length > 11) { // 10 itens + empty state
+        EL.logList.removeChild(EL.logList.lastChild);
+    }
+
+    EL.logCounter.innerText = `${STATE.currentSeriesEvents.length} / 10 eventos`;
+}
+
+function updateBatteryProgressUI() {
+    const count = STATE.currentSeriesEvents.length;
+    EL.testProgressCounter.innerText = `${count} / 10 leituras`;
+    const pct = Math.min((count / 10) * 100, 100);
+    EL.progressFill.style.width = `${pct}%`;
 }
 
 function updateAccuracyUI() {
@@ -688,6 +751,238 @@ function updateAccuracyUI() {
     }
 }
 
+// ----------------------------------------------------
+// 6. GESTÃO DE SÉRIES CONSOLIDADAS (SALVAR NA SÉRIE)
+// ----------------------------------------------------
+function saveCurrentBatteryToSeries() {
+    if (STATE.currentSeriesEvents.length === 0) {
+        showToast("Faça pelo menos 1 leitura antes de salvar na série.");
+        return;
+    }
+
+    STATE.seriesCounter++;
+    const total = STATE.currentSeriesEvents.length;
+    const correct = STATE.currentSeriesEvents.filter(e => e.isMatch).length;
+    const falsePos = total - correct;
+    const accPct = ((correct / total) * 100).toFixed(1);
+
+    const latencies = STATE.currentSeriesEvents.map(e => parseFloat(e.latencyMs)).filter(n => !isNaN(n));
+    const avgLat = latencies.length > 0 ? (latencies.reduce((a, b) => a + b, 0) / latencies.length).toFixed(1) : '15.0';
+
+    const seriesObj = {
+        seriesId: STATE.seriesCounter,
+        timestamp: new Date().toISOString(),
+        engine: STATE.activeEngine,
+        engineLabel: getEngineLabel(STATE.activeEngine),
+        condition: STATE.activeCondition,
+        conditionLabel: getConditionLabel(STATE.activeCondition),
+        groundTruth: STATE.groundTruthCode || 'N/A',
+        samplesCount: total,
+        correctCount: correct,
+        falseCount: falsePos,
+        accuracyPct: accPct,
+        avgLatencyMs: avgLat,
+        events: [...STATE.currentSeriesEvents]
+    };
+
+    STATE.savedSeries.push(seriesObj);
+    renderSeriesTable();
+
+    // Reseta a bateria corrente para o próximo teste
+    STATE.currentSeriesEvents = [];
+    updateBatteryProgressUI();
+    EL.logCounter.innerText = '0 / 10 eventos';
+    EL.logList.innerHTML = '';
+    EL.logList.appendChild(EL.logEmptyMsg);
+    EL.logEmptyMsg.style.display = 'flex';
+
+    showToast(`✅ Série #${seriesObj.seriesId} salva! (${seriesObj.engineLabel} • ${seriesObj.conditionLabel})`);
+}
+
+function getEngineLabel(id) {
+    const map = {
+        'optiscan': 'OptiScan SDK (WASM Core)',
+        'google-detector': 'Google Barcode API',
+        'vanilla-zxing': 'Vanilla ZXing-JS',
+        'html5-qrcode': 'HTML5-QRCode',
+        'quagga': 'Quagga2'
+    };
+    return map[id] || id;
+}
+
+function getConditionLabel(cond) {
+    const map = {
+        'CRUSHED': 'Amassada / Dobrada',
+        'CURVED': 'Curva / Cilíndrica',
+        'REFLECTIVE': 'Reflexo / Plástico',
+        'FLAT': 'Plana / Lisa'
+    };
+    return map[cond] || cond;
+}
+
+function renderSeriesTable() {
+    EL.savedSeriesCount.innerText = `${STATE.savedSeries.length} séries salvas`;
+    if (STATE.savedSeries.length === 0) {
+        EL.tableEmptyRow.style.display = 'table-row';
+        return;
+    }
+
+    EL.tableEmptyRow.style.display = 'none';
+    EL.benchmarkTableBody.innerHTML = '';
+
+    STATE.savedSeries.forEach((s, idx) => {
+        const tr = document.createElement('tr');
+        const accNum = parseFloat(s.accuracyPct);
+        const accClass = accNum >= 95 ? 'acc-high' : (accNum >= 70 ? 'acc-med' : 'acc-low');
+
+        tr.innerHTML = `
+            <td><strong>#${s.seriesId}</strong></td>
+            <td><strong>${s.engineLabel}</strong></td>
+            <td>${s.conditionLabel}</td>
+            <td><code>${s.groundTruth}</code></td>
+            <td>${s.samplesCount}</td>
+            <td style="color:var(--color-optiscan); font-weight:700;">${s.correctCount}</td>
+            <td style="color:var(--color-error); font-weight:700;">${s.falseCount}</td>
+            <td><span class="table-badge-acc ${accClass}">${s.accuracyPct}%</span></td>
+            <td>${s.avgLatencyMs} ms</td>
+            <td>
+                <button class="btn-delete-series" data-index="${idx}" title="Excluir série">&times;</button>
+            </td>
+        `;
+        EL.benchmarkTableBody.appendChild(tr);
+    });
+
+    // Delete handlers
+    document.querySelectorAll('.btn-delete-series').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            STATE.savedSeries.splice(idx, 1);
+            renderSeriesTable();
+            showToast("Série removida.");
+        });
+    });
+}
+
+// ----------------------------------------------------
+// 7. EXPORTAÇÃO COMPLETA DE DADOS (CSV / MARKDOWN / JSON)
+// ----------------------------------------------------
+function exportConsolidatedCSV() {
+    if (STATE.savedSeries.length === 0 && STATE.currentSeriesEvents.length === 0) {
+        showToast("Nenhum dado registrado para exportar.");
+        return;
+    }
+
+    let csv = "\uFEFF"; // BOM para suporte a caracteres acentuados no Excel
+
+    // SEÇÃO 1: RESUMO EXECUTIVO (TABELA CONSOLIDADA 5x3)
+    csv += "=== MATRIZ CONSOLIDADA DE BENCHMARK ===\n";
+    csv += "Serie_ID,Motor_Leitura,Condicao_Embalagem,Codigo_Controle,Amostras_Totais,Leituras_Corretas,Alucinacoes_Falsas,Assertividade_Pct,Latencia_Media_ms\n";
+
+    STATE.savedSeries.forEach(s => {
+        csv += `"${s.seriesId}","${s.engineLabel}","${s.conditionLabel}","${s.groundTruth}","${s.samplesCount}","${s.correctCount}","${s.falseCount}","${s.accuracyPct}%","${s.avgLatencyMs}"\n`;
+    });
+
+    csv += "\n\n=== LOG DETALHADO DE DISPAROS INDIVIDUAIS ===\n";
+    csv += "Serie_ID,Timestamp,Motor,Condicao,Codigo_Esperado,Codigo_Detectado,Status,Latencia_ms\n";
+
+    STATE.savedSeries.forEach(s => {
+        s.events.forEach(ev => {
+            csv += `"${s.seriesId}","${ev.timestamp}","${ev.engine}","${ev.condition}","${ev.groundTruth}","${ev.detectedCode}","${ev.status}","${ev.latencyMs}"\n`;
+        });
+    });
+
+    // Inclui também os da bateria corrente se houver
+    if (STATE.currentSeriesEvents.length > 0) {
+        STATE.currentSeriesEvents.forEach(ev => {
+            csv += `"BATERIA_ATUAL","${ev.timestamp}","${ev.engine}","${ev.condition}","${ev.groundTruth}","${ev.detectedCode}","${ev.status}","${ev.latencyMs}"\n`;
+        });
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `optiscan_benchmark_consolidated_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("Planilha CSV consolidada exportada com sucesso!");
+}
+
+function copyConsolidatedMarkdownTable() {
+    if (STATE.savedSeries.length === 0) {
+        showToast("Salve pelo menos 1 série para gerar a tabela Markdown.");
+        return;
+    }
+
+    let md = `### 📊 Matriz Consolidada de Benchmark de Leitura de Códigos\n\n`;
+    md += `| Série | Motor de Leitura | Condição da Embalagem | Amostras | Corretas | Alucinações (Ruído) | Assertividade (%) | Latência Média |\n`;
+    md += `| :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: |\n`;
+
+    STATE.savedSeries.forEach(s => {
+        md += `| #${s.seriesId} | **${s.engineLabel}** | ${s.conditionLabel} | ${s.samplesCount} | ${s.correctCount} | ${s.falseCount} | **${s.accuracyPct}%** | ${s.avgLatencyMs} ms |\n`;
+    });
+
+    md += `\n*Relatório gerado via OptiScan Telemetry Lab em ${new Date().toLocaleDateString('pt-BR')}.*\n`;
+
+    navigator.clipboard.writeText(md).then(() => {
+        showToast("Tabela Markdown copiada para a área de transferência!");
+    }).catch(() => {
+        showToast("Falha ao copiar tabela.");
+    });
+}
+
+function resetAllBenchmark() {
+    if (!confirm("Deseja zerar todas as estatísticas, baterias e séries salvas?")) return;
+    STATE.savedSeries = [];
+    STATE.currentSeriesEvents = [];
+    STATE.seriesCounter = 0;
+    Object.keys(STATE.stats).forEach(k => {
+        STATE.stats[k] = { correct: 0, falsePositives: 0, total: 0, latencies: [] };
+    });
+    renderSeriesTable();
+    updateBatteryProgressUI();
+    EL.logList.innerHTML = '';
+    EL.logList.appendChild(EL.logEmptyMsg);
+    EL.logEmptyMsg.style.display = 'flex';
+    EL.logCounter.innerText = '0 / 10 eventos';
+    updateAccuracyUI();
+    showToast("Todos os testes foram zerados.");
+}
+
+// ----------------------------------------------------
+// 8. TELEMETRIA E HELPERS
+// ----------------------------------------------------
+function recordLatencySample(ms) {
+    STATE.lastLatencySamples.push(ms);
+    if (STATE.lastLatencySamples.length > 20) {
+        STATE.lastLatencySamples.shift();
+    }
+}
+
+function startTelemetryMonitor() {
+    STATE.frameCounter = 0;
+    STATE.lastFrameTime = Date.now();
+    STATE.lastLatencySamples = [];
+
+    STATE.telemetryUpdateInterval = setInterval(() => {
+        const now = Date.now();
+        const delta = (now - STATE.lastFrameTime) / 1000;
+        const fps = Math.round(STATE.frameCounter / Math.max(delta, 0.001));
+        EL.metricFps.innerHTML = `${fps} <span class="unit">FPS</span>`;
+        STATE.frameCounter = 0;
+        STATE.lastFrameTime = now;
+
+        if (STATE.lastLatencySamples.length > 0) {
+            const avg = STATE.lastLatencySamples.reduce((a, b) => a + b, 0) / STATE.lastLatencySamples.length;
+            EL.metricLatency.innerHTML = `${avg.toFixed(1)} <span class="unit">ms</span>`;
+        } else {
+            EL.metricLatency.innerHTML = `-- <span class="unit">ms</span>`;
+        }
+    }, 1000);
+}
+
 function triggerGlitchEffect(subtext = '') {
     if (STATE.isGlitchActive) return;
     STATE.isGlitchActive = true;
@@ -711,77 +1006,6 @@ function triggerHaptic(pattern) {
     }
 }
 
-// ----------------------------------------------------
-// 5. EXPORTAÇÃO DE DADOS (CSV / MARKDOWN / JSON)
-// ----------------------------------------------------
-function exportCSV() {
-    if (STATE.benchmarkRecords.length === 0) {
-        showToast("Nenhum dado registrado ainda para exportar.");
-        return;
-    }
-
-    let csv = "Timestamp,Motor,Condicao_Embalagem,Ground_Truth_Esperado,Codigo_Detectado,Status_Avaliacao,Latencia_ms\n";
-    STATE.benchmarkRecords.forEach(r => {
-        csv += `"${r.timestamp}","${r.engine}","${r.condition}","${r.groundTruth}","${r.detectedCode}","${r.status}","${r.latencyMs}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `optiscan_benchmark_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    showToast("Planilha CSV exportada com sucesso!");
-}
-
-function copyMarkdownTable() {
-    const engines = [
-        { id: 'optiscan', name: 'OptiScan SDK (WASM Core)' },
-        { id: 'google-detector', name: 'Google Barcode API' },
-        { id: 'vanilla-zxing', name: 'Vanilla ZXing-JS' },
-        { id: 'html5-qrcode', name: 'HTML5-QRCode' },
-        { id: 'quagga', name: 'Quagga2' }
-    ];
-
-    let md = `### 📊 Resultados do Benchmark Comparativo (Condição: ${STATE.activeCondition})\n\n`;
-    md += `| Motor de Leitura | Leituras Corretas | Alucinações / Falsos Positivos | Assertividade (%) | Latência Média |\n`;
-    md += `| :--- | :---: | :---: | :---: | :---: |\n`;
-
-    engines.forEach(eng => {
-        const s = STATE.stats[eng.id] || { correct: 0, falsePositives: 0, total: 0, latencies: [] };
-        const acc = s.total > 0 ? ((s.correct / s.total) * 100).toFixed(1) + '%' : 'N/A';
-        const avgLat = s.latencies.length > 0 ? 
-            (s.latencies.reduce((a, b) => a + b, 0) / s.latencies.length).toFixed(1) + ' ms' : 'N/A';
-
-        md += `| **${eng.name}** | ${s.correct} | ${s.falsePositives} | **${acc}** | ${avgLat} |\n`;
-    });
-
-    md += `\n*Dados gerados via OptiScan Telemetry Lab em ${new Date().toLocaleDateString('pt-BR')}.*\n`;
-
-    navigator.clipboard.writeText(md).then(() => {
-        showToast("Tabela Markdown copiada para a área de transferência!");
-    }).catch(() => {
-        showToast("Falha ao copiar tabela.");
-    });
-}
-
-function resetBenchmark() {
-    if (!confirm("Deseja zerar todas as estatísticas e registros da sessão de testes?")) return;
-    STATE.benchmarkRecords = [];
-    Object.keys(STATE.stats).forEach(k => {
-        STATE.stats[k] = { correct: 0, falsePositives: 0, total: 0, latencies: [] };
-    });
-    EL.logList.innerHTML = '';
-    EL.logList.appendChild(EL.logEmptyMsg);
-    EL.logEmptyMsg.style.display = 'flex';
-    EL.logCounter.innerText = '0 eventos';
-    updateAccuracyUI();
-    showToast("Estatísticas de teste zeradas.");
-}
-
 function showToast(msg) {
     EL.toastMessage.innerText = msg;
     EL.toastNotification.classList.add('show');
@@ -791,7 +1015,7 @@ function showToast(msg) {
 }
 
 // ----------------------------------------------------
-// 6. EVENT LISTENERS E INICIALIZAÇÃO
+// 9. EVENT LISTENERS E INICIALIZAÇÃO
 // ----------------------------------------------------
 function setupEventListeners() {
     // Abas de Motores
@@ -814,11 +1038,39 @@ function setupEventListeners() {
         });
     });
 
-    // Controle de Ground Truth
-    EL.groundTruthInput.addEventListener('input', (e) => {
-        STATE.groundTruthCode = e.target.value.trim();
+    // Modos de Disparo
+    EL.btnModeSingle.addEventListener('click', () => setTriggerMode('SINGLE'));
+    EL.btnModeContinuous.addEventListener('click', () => setTriggerMode('CONTINUOUS'));
+    EL.btnMainTrigger.addEventListener('click', toggleTrigger);
+
+    // Atalho de Teclado: Barra de Espaço para Disparo Único
+    window.addEventListener('keydown', (e) => {
+        // Se estiver digitando no input de texto, não dispara
+        if (e.target && e.target.tagName === 'INPUT') return;
+        if (e.code === 'Space') {
+            e.preventDefault();
+            toggleTrigger();
+        }
+    });
+
+    // Ground Truth: Botão Salvar como Padrão
+    const saveTruthAction = () => {
+        const val = EL.groundTruthInput.value.trim();
+        if (!val) {
+            showToast("Digite o código de barras antes de salvar.");
+            return;
+        }
+        STATE.groundTruthCode = val;
         updateGroundTruthBadge();
         updateAccuracyUI();
+        showToast(`Código de controle salvo como padrão: [ ${val} ]`);
+    };
+
+    EL.btnSaveTruth.addEventListener('click', saveTruthAction);
+    EL.groundTruthInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            saveTruthAction();
+        }
     });
 
     EL.btnSetLastAsTruth.addEventListener('click', () => {
@@ -841,18 +1093,24 @@ function setupEventListeners() {
         showToast("Código de controle limpo.");
     });
 
+    // Salvar Bateria na Série
+    EL.btnSaveSeries.addEventListener('click', saveCurrentBatteryToSeries);
+
     // Ações de Cabeçalho
-    EL.btnExportCsv.addEventListener('click', exportCSV);
-    EL.btnCopyMd.addEventListener('click', copyMarkdownTable);
-    EL.btnResetBench.addEventListener('click', resetBenchmark);
+    EL.btnExportCsv.addEventListener('click', exportConsolidatedCSV);
+    EL.btnCopyMd.addEventListener('click', copyConsolidatedMarkdownTable);
+    EL.btnResetBench.addEventListener('click', resetAllBenchmark);
     EL.btnClearLogs.addEventListener('click', () => {
+        STATE.currentSeriesEvents = [];
+        updateBatteryProgressUI();
         EL.logList.innerHTML = '';
         EL.logList.appendChild(EL.logEmptyMsg);
         EL.logEmptyMsg.style.display = 'flex';
-        showToast("Histórico visual limpo.");
+        EL.logCounter.innerText = '0 / 10 eventos';
+        showToast("Bateria corrente limpa.");
     });
 
-    // Alternar Câmera e Lanterna
+    // Controles de Hardware (Câmera, Lanterna, Som)
     EL.btnSwitchCamera.addEventListener('click', async () => {
         if (STATE.devices.length <= 1) {
             showToast("Apenas uma câmera detectada.");
@@ -878,11 +1136,31 @@ function setupEventListeners() {
         }
     });
 
-    // Snippet de Código Drawer
+    EL.btnToggleSound.addEventListener('click', () => {
+        initAudio();
+        STATE.soundEnabled = !STATE.soundEnabled;
+        if (STATE.soundEnabled) {
+            EL.soundIcon.innerText = '🔊';
+            EL.soundText.innerText = 'Bip Sonoro: Ligado';
+            playScanBeep(true);
+            showToast("Bip sonoro ATIVADO");
+        } else {
+            EL.soundIcon.innerText = '🔇';
+            EL.soundText.innerText = 'Bip Sonoro: Desligado';
+            showToast("Bip sonoro DESATIVADO");
+        }
+    });
+
+    // Drawer de Código
     EL.btnViewCode.addEventListener('click', () => {
-        const snippet = CODE_SNIPPETS[STATE.activeEngine] || CODE_SNIPPETS['optiscan'];
-        EL.codeBlockContent.innerText = snippet;
-        EL.codeFileName.innerText = `${STATE.activeEngine}-integration.js`;
+        EL.codeBlockContent.innerText = `// OptiScan SDK - Integração em 3 Passos
+const leitor = new OptiScanSDK({
+    containerId: 'scanner-container',
+    wasmPath: 'sdk/OptiScanScanner.js',
+    scanInterval: 250,
+    cooldown: 2000,
+    onSuccess: (code) => console.log("Lido:", code)
+});`;
         EL.codeDrawer.classList.add('open');
         EL.drawerOverlay.classList.add('open');
     });
@@ -892,7 +1170,7 @@ function setupEventListeners() {
 
     EL.btnCopyCode.addEventListener('click', () => {
         navigator.clipboard.writeText(EL.codeBlockContent.innerText).then(() => {
-            showToast("Snippet copiado para a área de transferência!");
+            showToast("Snippet copiado!");
         });
     });
 }
@@ -912,9 +1190,10 @@ function closeDrawer() {
     EL.drawerOverlay.classList.remove('open');
 }
 
-// Inicialização Global da Página
+// Inicialização Global
 window.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
     await enumerateAllDevices();
+    setTriggerMode('SINGLE'); // Inicia em modo disparo único com trava
     await switchEngine('optiscan');
 });
