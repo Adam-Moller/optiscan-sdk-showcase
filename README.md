@@ -49,7 +49,7 @@ Resultados consolidados em condições de estresse físico (embalagens amassadas
 
 | Motor de Leitura | Tecnologia | Throughput | Tolerância a Dobras / Curvatura | Taxa de Alucinação (Falsos Positivos) |
 | :--- | :---: | :---: | :---: | :---: |
-| 🟢 **OptiScan SDK** | **WASM + Consenso** | **60 FPS** | **Alta (Consenso Dinâmico)** | **< 0.1% (Blindado)** |
+| 🟢 **OptiScan SDK** | **WASM + Heurística Proprietária de Validação** | **60 FPS** | **Alta (Heurística Dinâmica)** | **< 0.1% (Blindado)** |
 | 🔵 **Google Barcode API** | Chromium Nativo | ~30 FPS | Média (Falha em dobras severas) | Moderada (Leituras truncadas) |
 | 🟠 **Vanilla ZXing-JS** | JS Puro | 12-18 FPS | Baixa (Sensível a reflexo) | Alta sob movimentação |
 | 🟠 **HTML5-QRCode** | Canvas + ZXing | 15 FPS | Baixa | Alta |
@@ -81,7 +81,7 @@ Resultados consolidados em condições de estresse físico (embalagens amassadas
         cooldown: 2000,    // Cooldown anti-duplicação
         vibrate: true,     // Feedback tátil no mobile
         onSuccess: (code) => {
-            console.log("Código validado por consenso:", code);
+            console.log("Código validado por Heurística Proprietária", code);
             alert(`Lido com sucesso: ${code}`);
         },
         onStateChange: (state) => {
