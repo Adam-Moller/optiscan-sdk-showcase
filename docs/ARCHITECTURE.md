@@ -93,9 +93,9 @@ Cada biblioteca concorrente possui peculiaridades de API e gerenciamento de hard
 - **Particularidade:** Altíssimo throughput quando o código está perfeitamente plano, porém sofre quedas de assertividade em curvaturas severas.
 
 ### 3. Vanilla ZXing-JS (`@zxing/library`)
-- **Engine:** `BrowserMultiFormatReader` em JavaScript puro.
-- **Particularidade & Ajuste:** O leitor utiliza `hints` configurados com `DecodeHintType.POSSIBLE_FORMATS` (EAN-13, EAN-8, UPC-A, UPC-E, Code 128) e `DecodeHintType.TRY_HARDER = true`. O stream é processado via `decodeFromStream(stream, videoElement, callback)` para evitar sobrecarga de polling manual por canvas.
-- **Teardown:** `codeReader.reset()` garante o encerramento limpo da thread de varredura.
+- **Engine:** `MultiFormatReader` em JavaScript puro rodando em pipeline de binarização direta (`RGBLuminanceSource` + `HybridBinarizer`).
+- **Particularidade & Ajuste:** O leitor clássico de 1D do ZXing varre linhas exclusivamente no eixo horizontal (x). Quando uma embalagem é segurada verticalmente (como a lateral de caixas de gelatina, cosméticos e remédios, onde as barras ficam horizontais), a varredura convencional corre paralela às barras e nunca cruza o código. O adaptador implementa **análise de orientação de duplo eixo (0° e 90°)** em cada frame, além de desviar dos deadlocks de promessa comuns na classe `BrowserMultiFormatReader` em navegadores mobile.
+- **Teardown:** `multiFormatReader.reset()` garante a liberação de memória e encerramento do ciclo.
 
 ### 4. HTML5-QRCode (`html5-qrcode@2.3.8`)
 - **Engine:** Wrapper de alto nível com fallback para ZXing e BarcodeDetector.
