@@ -84,7 +84,7 @@ Cada biblioteca concorrente possui peculiaridades de API e gerenciamento de hard
 
 ### 1. OptiScan SDK (C++ WebAssembly Core)
 - **Engine:** Binário WebAssembly compilado com Clang/Emscripten (`-O3`, SIMD).
-- **Entrada:** Processamento de stream direto da câmera com fatiamento espacial e consenso temporal.
+- **Entrada:** Processamento de stream direto da câmera integrado à Heurística Proprietária de Integridade de Sinal.
 - **Isolamento:** Overlays internos de CSS da biblioteca foram neutralizados em favor do Viewfinder padronizado do laboratório.
 
 ### 2. Google BarcodeDetector API (Chromium Nativo)
@@ -148,7 +148,7 @@ optiscan-sdk-showcase/
 
 ## 🎯 Como o OptiScan Vence em Superfícies Desafiadoras
 
-Enquanto os concorrentes realizam **análise de frame estático** (onde uma dobra ou reflexo cega o código inteiro na imagem), o **OptiScan** aplica uma arquitetura de dois pilares:
+Enquanto motores convencionais realizam **decodificação ingênua frame-a-frame** (onde uma dobra, curvatura acentuada ou reflexo especular cega a imagem e gera alucinações de leitura), o **OptiScan** aplica uma arquitetura de alta performance:
 
-1. **Fatiamento Espacial (*Spatial Slicing*):** O frame de vídeo é seccionado em fatias horizontais independentes dentro do WebAssembly. Mesmo que a embalagem esteja severamente amassada ou curva, partes das barras permanecem alinhadas em fatias individuais.
-2. **Consenso Temporal (*Temporal Consensus*):** À medida que o operador movimenta a embalagem na frente da câmera, a luz especular e os reflexos se deslocam. O OptiScan acumula os votos de múltiplos frames consecutivos para reconstruir o código com 100% de integridade, eliminando alucinações de leitura.
+1. **Núcleo C++ compilado para WebAssembly (`-O3`):** Processamento matemático de imagem em tempo real a 60 FPS com latência sub-15ms e sem pausas de Garbage Collector.
+2. **Heurística Proprietária de Validação e Integridade de Sinal (*Signal Integrity Engine*):** Filtros estatísticos e heurísticas proprietárias que blindam o scanner contra leituras truncadas e falsos positivos, garantindo integridade de sinal em embalagens de alta complexidade física.
