@@ -434,7 +434,10 @@ class AppController {
     }
 
     _onTriggerChange(state) {
-        // Callback do gatilho
+        // Quando o leitor é destravado pelo usuário, garante que o motor ativo retome a varredura
+        if (state && state.isArmed && this.activeAdapter && typeof this.activeAdapter.resume === 'function') {
+            this.activeAdapter.resume();
+        }
     }
 
     _onRemoveSeries(index) {

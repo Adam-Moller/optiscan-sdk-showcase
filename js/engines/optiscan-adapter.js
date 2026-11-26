@@ -23,7 +23,7 @@ export class OptiScanAdapter extends BaseScannerAdapter {
             containerId: container.id,
             wasmPath: 'sdk/OptiScanScanner.js',
             scanInterval: 250,
-            cooldown: 1800,
+            cooldown: 250, // Cooldown de 250ms para permitir re-disparos ágeis no benchmark
             autoStart: false,
             vibrate: true,
             onSuccess: (code) => {
@@ -35,6 +35,12 @@ export class OptiScanAdapter extends BaseScannerAdapter {
                 if (this.onErrorCallback) this.onErrorCallback(err);
             }
         });
+    }
+
+    resume() {
+        if (this.sdkInstance && typeof this.sdkInstance.resume === 'function') {
+            this.sdkInstance.resume();
+        }
     }
 
     async start() {
