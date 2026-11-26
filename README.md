@@ -24,7 +24,7 @@ Enquanto motores tradicionais operam com decodificação estática dependente de
 
 ## 🌐 Demonstração Interativa ao Vivo
 
-Experimente o leitor em tempo real diretamente pelo seu navegador no computador ou celular:
+Compare o nosso SDK proprietário com os principais modelos disponíveis no mercado, em tempo real, diretamente pelo seu navegador no computador ou celular:
 
 👉 **[Acessar Live Showcase & Benchmark](https://adam-moller.github.io/optiscan-sdk-showcase/)**
 
