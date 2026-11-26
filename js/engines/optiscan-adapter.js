@@ -1,5 +1,5 @@
 /**
- * OptiScan SDK Adapter (WebAssembly + Spatial/Temporal Consensus)
+ * OptiScan SDK Adapter (WebAssembly + Heurística Proprietária)
  * Connects the proprietary C++ WebAssembly engine to the benchmarking framework.
  * (c) 2026 OptiScan Technologies
  */
